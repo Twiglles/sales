@@ -5,3 +5,5 @@ snapshot.txt
 *.snapshot.txt
 .env
 .env.*
+zp/app.src.html
+zp/app.plain.html

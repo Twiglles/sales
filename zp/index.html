@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0f0f0f">
+<title>Расчёт ЗП — вход</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:rgb(15,15,15);color:#F5F3F0;font:400 16px/1.45 Montserrat,system-ui,-apple-system,Segoe UI,sans-serif}
+.box{width:100%;max-width:380px;margin:20px;background:rgb(39,39,39);border:1px solid rgba(245,243,240,.14);border-radius:16px;padding:26px}
+.brand{font:400 18px 'Archivo Black',Impact,sans-serif;letter-spacing:.01em;text-transform:uppercase;margin-bottom:18px}
+h1{font-size:28px;line-height:1.05;font-weight:800;margin:0 0 6px}
+p{color:rgba(245,243,240,.7);margin:0 0 18px;font-size:14px}
+input[type=password],input[type=text]{width:100%;font:inherit;font-size:20px;letter-spacing:.2em;padding:13px;border:1px solid rgba(245,243,240,.14);border-radius:4px;background:rgb(24,24,24);color:#F5F3F0}
+input:focus{outline:none;border-color:rgb(178,42,42);box-shadow:0 0 0 1px rgb(178,42,42)}
+button{width:100%;margin-top:12px;font:700 16px inherit;padding:13px;border:0;border-radius:4px;background:rgb(154,31,31);color:#fff;cursor:pointer}
+button:hover{background:rgb(178,42,42)}
+label{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px;color:rgba(245,243,240,.7)}
+#err{color:#ff9a8a;font-size:14px;min-height:20px;margin-top:10px}
+</style>
+</head>
+<body>
+<form class="box" id="f" autocomplete="off">
+  <div class="brand">Twiglles</div>
+  <h1>Расчёт зарплаты</h1>
+  <p>Введите пароль доступа.</p>
+  <input id="pin" type="password" inputmode="numeric" autocomplete="off" autofocus placeholder="••••">
+  <label><input type="checkbox" id="rem" checked> Запомнить на этом устройстве</label>
+  <div id="err"></div>
+  <button type="submit">Войти</button>
+</form>
+<script>
+(function(){
+  var KEY='zpGate', errEl=document.getElementById('err'), enc=null;
+  function b64(x){var b=atob(x),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+  function load(){return enc?Promise.resolve(enc):fetch('app.enc.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error('load');return r.json()}).then(function(j){enc=j;return j})}
+  function decrypt(pin){
+    return load().then(function(E){
+      return crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveKey']).then(function(k){
+        return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(E.s),iterations:E.n,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['decrypt'])
+      }).then(function(key){return crypto.subtle.decrypt({name:'AES-GCM',iv:b64(E.i)},key,b64(E.c))})
+    }).then(function(buf){return new TextDecoder().decode(buf)});
+  }
+  function open(html){document.open();document.write(html);document.close()}
+  function enter(pin,remember,silent){
+    if(!(window.crypto&&crypto.subtle)){errEl.textContent='Браузер не поддерживает расшифровку. Откройте страницу в Chrome или Safari.';return}
+    errEl.textContent=silent?'':'Проверяю…';
+    decrypt(pin).then(function(html){
+      try{if(remember)localStorage.setItem(KEY,pin);else localStorage.removeItem(KEY)}catch(e){}
+      open(html);
+    },function(e){
+      if(silent){try{localStorage.removeItem(KEY)}catch(x){}errEl.textContent='';return}
+      errEl.textContent=(e&&e.message==='load')?'Не удалось загрузить страницу. Проверьте интернет.':'Неверный пароль';
+    });
+  }
+  document.getElementById('f').onsubmit=function(ev){ev.preventDefault();enter(document.getElementById('pin').value.trim(),document.getElementById('rem').checked,false)};
+  var saved=null;try{saved=localStorage.getItem(KEY)}catch(e){}
+  if(saved)enter(saved,true,true);
+})();
+</script>
+</body>
+</html>

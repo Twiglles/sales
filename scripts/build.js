@@ -22,6 +22,13 @@ fs.mkdirSync(dist, { recursive: true });
 for (const f of ['index.html', 'styles.css', 'core.js', 'app.js']) {
   fs.copyFileSync(path.join(root, 'src', f), path.join(dist, f));
 }
+// Калькулятор ЗП: страница входа и зашифрованное приложение, по адресу /zp/
+fs.mkdirSync(path.join(dist, 'zp'), { recursive: true });
+for (const f of ['index.html', 'app.enc.json']) {
+  const src = path.join(root, 'zp', f);
+  if (!fs.existsSync(src)) { console.error('Нет файла zp/' + f + '. Создайте его: PIN=… node scripts/encrypt-zp.js index.html'); process.exit(1); }
+  fs.copyFileSync(src, path.join(dist, 'zp', f));
+}
 const payload = { enc: { s: data.s, i: data.i, c: data.c, n: data.n }, at: data.at };
 fs.writeFileSync(path.join(dist, 'data.js'), 'window.TWG_DATA = ' + JSON.stringify(payload) + ';\n');
 // GitHub Pages не должен пытаться обрабатывать сайт как Jekyll
