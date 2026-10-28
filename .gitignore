@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# Открытые данные таблицы и пароль в репозиторий не попадают
+snapshot.txt
+*.snapshot.txt
+.env
+.env.*

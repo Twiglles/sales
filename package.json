@@ -1,0 +1,15 @@
+{
+  "name": "twiglles-sales",
+  "version": "1.0.0",
+  "description": "Воронка продаж Твиглс: статический дашборд с паролем, данные зашифрованы",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node scripts/build.js && node scripts/serve.js",
+    "serve": "node scripts/serve.js",
+    "data": "node scripts/encrypt-data.js",
+    "test": "node --test"
+  }
+}
